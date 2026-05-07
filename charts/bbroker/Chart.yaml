@@ -1,0 +1,15 @@
+apiVersion: v2
+name: bbroker
+description: Browser Broker — Kubernetes browser-as-a-service
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - browser
+  - chrome
+  - cdp
+  - playwright
+  - kubernetes
+home: https://github.com/jlaska/bbroker
+sources:
+  - https://github.com/jlaska/bbroker

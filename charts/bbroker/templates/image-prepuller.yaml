@@ -1,0 +1,62 @@
+{{- if .Values.imagePrepuller.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: bbroker-image-prepuller
+  namespace: {{ .Values.browserNamespace }}
+  labels:
+    app.kubernetes.io/name: bbroker-image-prepuller
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bbroker-image-prepuller
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bbroker-image-prepuller
+    spec:
+      initContainers:
+        - name: pull-browser
+          image: {{ .Values.browser.image }}
+          command: ["true"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+        - name: pull-defender
+          image: "{{ .Values.image.defender.repository }}:{{ .Values.image.defender.tag }}"
+          command: ["/bbroker-defender", "-h"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+        - name: pull-xvfb
+          image: "{{ .Values.image.xvfb.repository }}:{{ .Values.image.xvfb.tag }}"
+          command: ["true"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 32Mi
+      containers:
+        - name: pause
+          image: gcr.io/google_containers/pause:3.9
+          resources:
+            requests:
+              cpu: 1m
+              memory: 4Mi
+            limits:
+              cpu: 10m
+              memory: 16Mi
+{{- end }}

@@ -1,0 +1,56 @@
+replicaCount: 2
+
+image:
+  proxy:
+    repository: ghcr.io/jlaska/bbroker-proxy
+    tag: latest
+    pullPolicy: IfNotPresent
+  defender:
+    repository: ghcr.io/jlaska/bbroker-defender
+    tag: latest
+  xvfb:
+    repository: ghcr.io/jlaska/bbroker-xvfb
+    tag: latest
+
+# Namespace where browser pods are created.
+browserNamespace: bbroker-system
+
+browser:
+  image: chromedp/headless-shell:latest
+  idleTimeoutSeconds: 300
+  sessionTimeoutSeconds: 1800
+
+service:
+  type: ClusterIP
+  port: 4444
+  metricsPort: 8080
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "bbrokerd"
+  hosts:
+    - host: bbroker.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# Optional DaemonSet to pre-pull the browser image on all nodes.
+imagePrepuller:
+  enabled: true
+
+serviceMonitor:
+  enabled: false
+  interval: 15s

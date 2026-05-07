@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bbrokerd
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: bbrokerd
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bbrokerd
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bbrokerd
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: bbrokerd
+      containers:
+        - name: bbrokerd
+          image: "{{ .Values.image.proxy.repository }}:{{ .Values.image.proxy.tag }}"
+          imagePullPolicy: {{ .Values.image.proxy.pullPolicy }}
+          args:
+            - -addr=:{{ .Values.service.port }}
+            - -metrics-addr=:{{ .Values.service.metricsPort }}
+            - -namespace={{ .Values.browserNamespace }}
+            - -browser-image={{ .Values.browser.image }}
+            - -defender-image={{ .Values.image.defender.repository }}:{{ .Values.image.defender.tag }}
+            - -xvfb-image={{ .Values.image.xvfb.repository }}:{{ .Values.image.xvfb.tag }}
+          ports:
+            - name: ws
+              containerPort: {{ .Values.service.port }}
+            - name: metrics
+              containerPort: {{ .Values.service.metricsPort }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
