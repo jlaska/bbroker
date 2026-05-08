@@ -7,7 +7,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	bk8s "github.com/jlaska/bbroker/internal/k8s"
 	"github.com/jlaska/bbroker/internal/proxy"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -31,6 +33,13 @@ func main() {
 		slog.Error("build k8s client", "err", err)
 		os.Exit(1)
 	}
+
+	// Clean up any browser pods left over from a previous proxy crash.
+	startupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	if err := bk8s.CleanupOrphanedPods(startupCtx, k8sClient, *namespace); err != nil {
+		slog.Warn("orphan cleanup", "err", err)
+	}
+	cancel()
 
 	cfg := proxy.Config{
 		ListenAddr:    *addr,

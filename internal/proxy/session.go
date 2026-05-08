@@ -2,6 +2,8 @@ package proxy
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -196,5 +198,7 @@ func rewriteHost(cdpURL, podIP string) string {
 }
 
 func newSessionID() string {
-	return fmt.Sprintf("session-%d", time.Now().UnixNano())
+	b := make([]byte, 8)
+	rand.Read(b)
+	return fmt.Sprintf("session-%s", hex.EncodeToString(b))
 }

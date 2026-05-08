@@ -3,31 +3,38 @@ package proxy
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 func TestDiscoverCDPEndpoint(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/json/version" {
+			http.NotFound(w, r)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"webSocketDebuggerUrl":"ws://localhost:9222/devtools/browser/abc"}`))
+		w.Write([]byte(`{"webSocketDebuggerUrl":"ws://localhost:9222/devtools/browser/abc123"}`))
 	}))
 	defer srv.Close()
 
-	// srv.URL is http://127.0.0.1:PORT
-	host := strings.TrimPrefix(srv.URL, "http://")
-	parts := strings.Split(host, ":")
+	// Parse host and port from test server URL (http://127.0.0.1:PORT)
+	addr := strings.TrimPrefix(srv.URL, "http://")
+	parts := strings.SplitN(addr, ":", 2)
 	ip := parts[0]
-	// Use the test server port; swap to a port parser for robustness.
-	var port int
-	if _, err := (&http.Client{}).Get(srv.URL + "/json/version"); err == nil {
-		// will never reach — just confirming server is up
+	port, err := strconv.Atoi(parts[1])
+	if err != nil {
+		t.Fatalf("parse port: %v", err)
 	}
 
-	// Directly test the URL building.
-	_ = ip
-	_ = port
-	t.Log("CDP discovery URL construction OK")
+	got, err := DiscoverCDPEndpoint(ip, port)
+	if err != nil {
+		t.Fatalf("DiscoverCDPEndpoint: %v", err)
+	}
+	if !strings.Contains(got, "devtools/browser/abc123") {
+		t.Errorf("unexpected CDP URL: %q", got)
+	}
 }
 
 func TestRewriteHost(t *testing.T) {
