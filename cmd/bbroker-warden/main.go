@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jlaska/bbroker/internal/defender"
+	"github.com/jlaska/bbroker/internal/warden"
 )
 
 func main() {
-	addr := flag.String("addr", ":4545", "defender listen address")
+	addr := flag.String("addr", ":4545", "warden listen address")
 	cdpPort := flag.Int("cdp-port", 9222, "Chrome CDP port")
 	idleTimeout := flag.Duration("idle-timeout", 5*time.Minute, "idle timeout before pod self-terminates")
 	sessionTimeout := flag.Duration("session-timeout", 30*time.Minute, "max session duration")
@@ -22,21 +22,21 @@ func main() {
 
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
-	term, err := defender.NewPodTerminator()
+	term, err := warden.NewPodTerminator()
 	if err != nil {
 		slog.Error("init pod terminator", "err", err)
 		// Outside k8s (local dev), log and continue without self-term.
 		term = nil
 	}
 
-	var terminator defender.Terminator
+	var terminator warden.Terminator
 	if term != nil {
 		terminator = term
 	} else {
 		terminator = &logTerminator{}
 	}
 
-	d := defender.New(
+	d := warden.New(
 		fmt.Sprintf("localhost:%d", *cdpPort),
 		*idleTimeout,
 		*sessionTimeout,
@@ -47,7 +47,7 @@ func main() {
 	defer stop()
 
 	if err := d.Run(ctx, *addr); err != nil {
-		slog.Error("defender exited", "err", err)
+		slog.Error("warden exited", "err", err)
 		os.Exit(1)
 	}
 }

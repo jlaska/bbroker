@@ -29,19 +29,19 @@ type SessionManager struct {
 	client        kubernetes.Interface
 	namespace     string
 	browserImage  string
-	defenderImage string
+	wardenImage string
 	xvfbImage     string
 
 	mu       sync.Mutex
 	sessions map[string]*SessionInfo
 }
 
-func NewSessionManager(client kubernetes.Interface, namespace, browserImage, defenderImage, xvfbImage string) *SessionManager {
+func NewSessionManager(client kubernetes.Interface, namespace, browserImage, wardenImage, xvfbImage string) *SessionManager {
 	return &SessionManager{
 		client:        client,
 		namespace:     namespace,
 		browserImage:  browserImage,
-		defenderImage: defenderImage,
+		wardenImage: wardenImage,
 		xvfbImage:     xvfbImage,
 		sessions:      make(map[string]*SessionInfo),
 	}
@@ -78,7 +78,7 @@ func (sm *SessionManager) Handle(ctx context.Context, w http.ResponseWriter, r *
 		SessionID:     sessionID,
 		Namespace:     sm.namespace,
 		BrowserImage:  sm.browserImage,
-		DefenderImage: sm.defenderImage,
+		WardenImage: sm.wardenImage,
 		Headful:       headful,
 		XvfbImage:     sm.xvfbImage,
 		Params:        params,

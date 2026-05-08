@@ -12,7 +12,7 @@ func TestBuildPodSpec_Headless(t *testing.T) {
 		SessionID:     "session-test",
 		Namespace:     "bbroker-system",
 		BrowserImage:  "chromedp/headless-shell:latest",
-		DefenderImage: "ghcr.io/jlaska/bbroker-defender:latest",
+		WardenImage: "ghcr.io/jlaska/bbroker-warden:latest",
 		Headful:       false,
 		XvfbImage:     "ghcr.io/jlaska/bbroker-xvfb:latest",
 		Params:        url.Values{},
@@ -26,7 +26,7 @@ func TestBuildPodSpec_Headless(t *testing.T) {
 		t.Error("missing component label")
 	}
 	if len(pod.Spec.Containers) != 2 {
-		t.Errorf("expected 2 containers (browser+defender), got %d", len(pod.Spec.Containers))
+		t.Errorf("expected 2 containers (browser+warden), got %d", len(pod.Spec.Containers))
 	}
 	// Headless: no --headless args override needed but no DISPLAY env
 	for _, c := range pod.Spec.Containers {
@@ -45,7 +45,7 @@ func TestBuildPodSpec_Headful(t *testing.T) {
 		SessionID:     "session-headful",
 		Namespace:     "bbroker-system",
 		BrowserImage:  "chromedp/headless-shell:latest",
-		DefenderImage: "ghcr.io/jlaska/bbroker-defender:latest",
+		WardenImage: "ghcr.io/jlaska/bbroker-warden:latest",
 		Headful:       true,
 		XvfbImage:     "ghcr.io/jlaska/bbroker-xvfb:latest",
 		Params:        url.Values{},
@@ -53,7 +53,7 @@ func TestBuildPodSpec_Headful(t *testing.T) {
 	pod := buildPodSpec(cfg)
 
 	if len(pod.Spec.Containers) != 3 {
-		t.Errorf("expected 3 containers (browser+defender+xvfb), got %d", len(pod.Spec.Containers))
+		t.Errorf("expected 3 containers (browser+warden+xvfb), got %d", len(pod.Spec.Containers))
 	}
 
 	hasXvfb := false

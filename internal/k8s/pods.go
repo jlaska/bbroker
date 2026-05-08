@@ -18,7 +18,7 @@ const (
 
 	ComponentBrowser = "browser"
 
-	DefenderPort = 4545
+	WardenPort = 4545
 	CDPPort      = 9222
 )
 
@@ -27,7 +27,7 @@ type SessionConfig struct {
 	SessionID    string
 	Namespace    string
 	BrowserImage string
-	DefenderImage string
+	WardenImage string
 	Headful      bool
 	XvfbImage    string
 	Params       url.Values // extra query params forwarded as Chrome flags
@@ -58,7 +58,7 @@ func buildPodSpec(cfg SessionConfig) *corev1.Pod {
 	chromeArgs := buildChromeArgs(cfg)
 	containers := []corev1.Container{
 		browserContainer(cfg, chromeArgs),
-		defenderContainer(cfg),
+		wardenContainer(cfg),
 	}
 	if cfg.Headful {
 		containers = append(containers, xvfbContainer(cfg))
@@ -127,7 +127,7 @@ func browserContainer(cfg SessionConfig, chromeArgs []string) corev1.Container {
 	return c
 }
 
-func defenderContainer(cfg SessionConfig) corev1.Container {
+func wardenContainer(cfg SessionConfig) corev1.Container {
 	env := []corev1.EnvVar{
 		{Name: "BBROKER_CDP_PORT", Value: fmt.Sprintf("%d", CDPPort)},
 		// Downward API: pod name for self-termination
@@ -145,10 +145,10 @@ func defenderContainer(cfg SessionConfig) corev1.Container {
 		},
 	}
 	return corev1.Container{
-		Name:  "defender",
-		Image: cfg.DefenderImage,
+		Name:  "warden",
+		Image: cfg.WardenImage,
 		Ports: []corev1.ContainerPort{
-			{Name: "defender", ContainerPort: DefenderPort, Protocol: corev1.ProtocolTCP},
+			{Name: "warden", ContainerPort: WardenPort, Protocol: corev1.ProtocolTCP},
 		},
 		Env: env,
 		Resources: corev1.ResourceRequirements{

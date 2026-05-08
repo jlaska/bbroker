@@ -21,7 +21,7 @@ func main() {
 	metricsAddr := flag.String("metrics-addr", ":8080", "metrics/health listen address")
 	namespace := flag.String("namespace", "bbroker-system", "namespace to create browser pods in")
 	browserImage := flag.String("browser-image", "chromedp/headless-shell:latest", "browser container image")
-	defenderImage := flag.String("defender-image", "ghcr.io/jlaska/bbroker-defender:latest", "defender sidecar image")
+	wardenImage := flag.String("warden-image", "ghcr.io/jlaska/bbroker-warden:latest", "warden sidecar image")
 	xvfbImage := flag.String("xvfb-image", "ghcr.io/jlaska/bbroker-xvfb:latest", "xvfb sidecar image")
 	kubeconfig := flag.String("kubeconfig", "", "path to kubeconfig (empty = in-cluster)")
 	flag.Parse()
@@ -46,10 +46,10 @@ func main() {
 		MetricsAddr:   *metricsAddr,
 		Namespace:     *namespace,
 		BrowserImage:  *browserImage,
-		DefenderImage: *defenderImage,
+		WardenImage: *wardenImage,
 		XvfbImage:     *xvfbImage,
 	}
-	manager := proxy.NewSessionManager(k8sClient, *namespace, *browserImage, *defenderImage, *xvfbImage)
+	manager := proxy.NewSessionManager(k8sClient, *namespace, *browserImage, *wardenImage, *xvfbImage)
 	srv := proxy.NewServer(cfg, manager)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)

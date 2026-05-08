@@ -29,9 +29,9 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
-        - name: pull-defender
-          image: "{{ .Values.image.defender.repository }}:{{ .Values.image.defender.tag }}"
-          command: ["/bbroker-defender", "-h"]
+        - name: pull-warden
+          image: "{{ .Values.image.warden.repository }}:{{ .Values.image.warden.tag }}"
+          command: ["/bbroker-warden", "-h"]
           resources:
             requests:
               cpu: 10m

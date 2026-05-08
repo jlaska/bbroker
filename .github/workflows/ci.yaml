@@ -59,13 +59,13 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/bbroker-proxy:latest
           platforms: linux/amd64,linux/arm64
-      - name: Build and push defender
+      - name: Build and push warden
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.defender
+          file: Dockerfile.warden
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/bbroker-defender:latest
+          tags: ghcr.io/${{ github.repository_owner }}/bbroker-warden:latest
           platforms: linux/amd64,linux/arm64
       - name: Build and push xvfb
         uses: docker/build-push-action@v6

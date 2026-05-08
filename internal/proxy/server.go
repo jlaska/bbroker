@@ -17,7 +17,7 @@ type Config struct {
 	MetricsAddr   string
 	Namespace     string
 	BrowserImage  string
-	DefenderImage string
+	WardenImage string
 	XvfbImage     string
 }
 

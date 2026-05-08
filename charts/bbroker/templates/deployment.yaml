@@ -27,7 +27,7 @@ spec:
             - -metrics-addr=:{{ .Values.service.metricsPort }}
             - -namespace={{ .Values.browserNamespace }}
             - -browser-image={{ .Values.browser.image }}
-            - -defender-image={{ .Values.image.defender.repository }}:{{ .Values.image.defender.tag }}
+            - -warden-image={{ .Values.image.warden.repository }}:{{ .Values.image.warden.tag }}
             - -xvfb-image={{ .Values.image.xvfb.repository }}:{{ .Values.image.xvfb.tag }}
           ports:
             - name: ws

@@ -5,7 +5,7 @@ Kubernetes-native browser-as-a-service. Creates isolated Chrome browser pods on 
 ## Architecture
 
 - **bbrokerd** — stateless WebSocket proxy. Each client connection creates an ephemeral browser pod and relays CDP traffic directly to it. No database, no session store.
-- **bbroker-defender** — sidecar in every browser pod. Enforces single-session, manages idle/session timeouts, self-terminates the pod via k8s API.
+- **bbroker-warden** — sidecar in every browser pod. Enforces single-session, manages idle/session timeouts, self-terminates the pod via k8s API.
 - **bbroker-xvfb** — optional sidecar for headful Chrome (virtual display). Added when `?headful=true` is in the URL.
 
 Sessions = pods. `kubectl get pods -l bbroker.io/component=browser` shows all active sessions.

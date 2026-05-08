@@ -1,4 +1,4 @@
-package defender
+package warden
 
 import (
 	"context"
@@ -58,7 +58,7 @@ func (d *Defender) Run(ctx context.Context, addr string) error {
 		srv.Shutdown(shutCtx)
 	}()
 
-	slog.Info("defender listening", "addr", addr)
+	slog.Info("warden listening", "addr", addr)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		return err
 	}

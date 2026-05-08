@@ -5,8 +5,8 @@ image:
     repository: ghcr.io/jlaska/bbroker-proxy
     tag: latest
     pullPolicy: IfNotPresent
-  defender:
-    repository: ghcr.io/jlaska/bbroker-defender
+  warden:
+    repository: ghcr.io/jlaska/bbroker-warden
     tag: latest
   xvfb:
     repository: ghcr.io/jlaska/bbroker-xvfb

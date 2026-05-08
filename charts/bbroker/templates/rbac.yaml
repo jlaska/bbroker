@@ -33,7 +33,7 @@ roleRef:
   name: bbrokerd
   apiGroup: rbac.authorization.k8s.io
 ---
-# bbroker-defender sidecar needs to delete its own pod.
+# bbroker-warden sidecar needs to delete its own pod.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

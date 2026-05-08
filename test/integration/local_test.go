@@ -81,7 +81,7 @@ func waitForChrome(t *testing.T, port int) string {
 	return ""
 }
 
-// TestDefenderRelay tests the defender's WS proxy logic against a real Chrome.
+// TestDefenderRelay tests the warden's WS proxy logic against a real Chrome.
 func TestDefenderRelay(t *testing.T) {
 	chromePort := freePort(t)
 	startChrome(t, chromePort)
@@ -90,7 +90,7 @@ func TestDefenderRelay(t *testing.T) {
 	cdpURL = strings.ReplaceAll(cdpURL, "localhost", "127.0.0.1")
 	t.Logf("Chrome CDP: %s", cdpURL)
 
-	// Start a simple WebSocket echo-proxy that mimics the defender:
+	// Start a simple WebSocket echo-proxy that mimics the warden:
 	// Accept one connection and relay to Chrome CDP.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		clientConn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
