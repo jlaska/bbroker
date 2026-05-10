@@ -26,24 +26,26 @@ type SessionInfo struct {
 
 // SessionManager creates and destroys browser pods per client connection.
 type SessionManager struct {
-	client        kubernetes.Interface
-	namespace     string
-	browserImage  string
-	wardenImage string
-	xvfbImage     string
+	client       kubernetes.Interface
+	namespace    string
+	browserImage string
+	browserArgs  []string
+	wardenImage  string
+	xvfbImage    string
 
 	mu       sync.Mutex
 	sessions map[string]*SessionInfo
 }
 
-func NewSessionManager(client kubernetes.Interface, namespace, browserImage, wardenImage, xvfbImage string) *SessionManager {
+func NewSessionManager(client kubernetes.Interface, cfg Config) *SessionManager {
 	return &SessionManager{
-		client:        client,
-		namespace:     namespace,
-		browserImage:  browserImage,
-		wardenImage: wardenImage,
-		xvfbImage:     xvfbImage,
-		sessions:      make(map[string]*SessionInfo),
+		client:       client,
+		namespace:    cfg.Namespace,
+		browserImage: cfg.BrowserImage,
+		browserArgs:  cfg.BrowserArgs,
+		wardenImage:  cfg.WardenImage,
+		xvfbImage:    cfg.XvfbImage,
+		sessions:     make(map[string]*SessionInfo),
 	}
 }
 
@@ -75,13 +77,14 @@ func (sm *SessionManager) Handle(ctx context.Context, w http.ResponseWriter, r *
 	defer activeSessions.WithLabelValues(browser).Dec()
 
 	cfg := bk8s.SessionConfig{
-		SessionID:     sessionID,
-		Namespace:     sm.namespace,
-		BrowserImage:  sm.browserImage,
-		WardenImage: sm.wardenImage,
-		Headful:       headful,
-		XvfbImage:     sm.xvfbImage,
-		Params:        params,
+		SessionID:    sessionID,
+		Namespace:    sm.namespace,
+		BrowserImage: sm.browserImage,
+		BrowserArgs:  sm.browserArgs,
+		WardenImage:  sm.wardenImage,
+		Headful:      headful,
+		XvfbImage:    sm.xvfbImage,
+		Params:       params,
 	}
 
 	pod, err := bk8s.CreateBrowserPod(ctx, sm.client, cfg)

@@ -13,12 +13,15 @@ import (
 
 // Config holds proxy server configuration.
 type Config struct {
-	ListenAddr    string
-	MetricsAddr   string
-	Namespace     string
-	BrowserImage  string
-	WardenImage string
-	XvfbImage     string
+	ListenAddr   string
+	MetricsAddr  string
+	Namespace    string
+	BrowserImage string
+	// BrowserArgs overrides the browser container entrypoint args.
+	// Leave nil to use the image's built-in entrypoint (e.g. chromedp/headless-shell).
+	BrowserArgs  []string
+	WardenImage  string
+	XvfbImage    string
 }
 
 // Server is the bbrokerd HTTP/WebSocket server.

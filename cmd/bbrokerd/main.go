@@ -42,14 +42,16 @@ func main() {
 	cancel()
 
 	cfg := proxy.Config{
-		ListenAddr:    *addr,
-		MetricsAddr:   *metricsAddr,
-		Namespace:     *namespace,
-		BrowserImage:  *browserImage,
-		WardenImage: *wardenImage,
-		XvfbImage:     *xvfbImage,
+		ListenAddr:   *addr,
+		MetricsAddr:  *metricsAddr,
+		Namespace:    *namespace,
+		BrowserImage: *browserImage,
+		WardenImage:  *wardenImage,
+		XvfbImage:    *xvfbImage,
+		// BrowserArgs left nil: chromedp/headless-shell manages its own startup.
+		// Set via env or future flag for bare Chrome images.
 	}
-	manager := proxy.NewSessionManager(k8sClient, *namespace, *browserImage, *wardenImage, *xvfbImage)
+	manager := proxy.NewSessionManager(k8sClient, cfg)
 	srv := proxy.NewServer(cfg, manager)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)

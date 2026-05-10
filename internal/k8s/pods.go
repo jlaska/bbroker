@@ -27,10 +27,15 @@ type SessionConfig struct {
 	SessionID    string
 	Namespace    string
 	BrowserImage string
-	WardenImage string
+	// BrowserArgs overrides the browser container's command args.
+	// When empty, the image's own entrypoint runs unmodified (correct for
+	// self-contained images like chromedp/headless-shell that manage Chrome
+	// startup internally). Set explicitly for bare Chrome binaries.
+	BrowserArgs  []string
+	WardenImage  string
 	Headful      bool
 	XvfbImage    string
-	Params       url.Values // extra query params forwarded as Chrome flags
+	Params       url.Values
 }
 
 // CreateBrowserPod creates an ephemeral browser pod and returns its name.
@@ -55,9 +60,14 @@ func ListBrowserPods(ctx context.Context, client kubernetes.Interface, namespace
 }
 
 func buildPodSpec(cfg SessionConfig) *corev1.Pod {
-	chromeArgs := buildChromeArgs(cfg)
+	// Use explicit BrowserArgs if provided; otherwise let the image's own
+	// entrypoint handle Chrome startup (correct for headless-shell, etc.).
+	args := cfg.BrowserArgs
+	if args == nil && len(cfg.Params) > 0 {
+		args = buildChromeArgs(cfg)
+	}
 	containers := []corev1.Container{
-		browserContainer(cfg, chromeArgs),
+		browserContainer(cfg, args),
 		wardenContainer(cfg),
 	}
 	if cfg.Headful {
