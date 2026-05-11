@@ -19,9 +19,15 @@ type Config struct {
 	BrowserImage string
 	// BrowserArgs overrides the browser container entrypoint args.
 	// Leave nil to use the image's built-in entrypoint (e.g. chromedp/headless-shell).
-	BrowserArgs  []string
-	WardenImage  string
-	XvfbImage    string
+	BrowserArgs []string
+	WardenImage string
+	XvfbImage   string
+	// DirectWSPort, when non-zero, causes bbrokerd to skip CDP /json/version
+	// discovery and connect directly to ws://pod_ip:{DirectWSPort}.
+	// Query params from the client URL (e.g. ?headful=true) are forwarded.
+	// Use this for "proxy-image" browsers like sockpuppetbrowser that expose
+	// a WebSocket endpoint directly rather than Chrome's raw CDP port.
+	DirectWSPort int
 }
 
 // Server is the bbrokerd HTTP/WebSocket server.

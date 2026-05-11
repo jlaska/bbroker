@@ -19,6 +19,9 @@ browser:
   image: chromedp/headless-shell:latest
   idleTimeoutSeconds: 300
   sessionTimeoutSeconds: 1800
+  # directWSPort: when non-zero, skip CDP /json/version discovery and connect
+  # directly to this port on the browser pod. Use 3000 for sockpuppetbrowser.
+  directWSPort: 0
 
 service:
   type: ClusterIP

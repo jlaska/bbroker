@@ -29,6 +29,9 @@ spec:
             - -browser-image={{ .Values.browser.image }}
             - -warden-image={{ .Values.image.warden.repository }}:{{ .Values.image.warden.tag }}
             - -xvfb-image={{ .Values.image.xvfb.repository }}:{{ .Values.image.xvfb.tag }}
+            {{- if .Values.browser.directWSPort }}
+            - -direct-ws-port={{ .Values.browser.directWSPort }}
+            {{- end }}
           ports:
             - name: ws
               containerPort: {{ .Values.service.port }}

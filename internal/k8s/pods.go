@@ -60,14 +60,11 @@ func ListBrowserPods(ctx context.Context, client kubernetes.Interface, namespace
 }
 
 func buildPodSpec(cfg SessionConfig) *corev1.Pod {
-	// Use explicit BrowserArgs if provided; otherwise let the image's own
-	// entrypoint handle Chrome startup (correct for headless-shell, etc.).
-	args := cfg.BrowserArgs
-	if args == nil && len(cfg.Params) > 0 {
-		args = buildChromeArgs(cfg)
-	}
+	// Only override container args when explicitly set. When nil, the image's
+	// own entrypoint runs unmodified — correct for self-managed images like
+	// chromedp/headless-shell that handle Chrome startup internally.
 	containers := []corev1.Container{
-		browserContainer(cfg, args),
+		browserContainer(cfg, cfg.BrowserArgs),
 		wardenContainer(cfg),
 	}
 	if cfg.Headful {

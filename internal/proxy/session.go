@@ -32,6 +32,7 @@ type SessionManager struct {
 	browserArgs  []string
 	wardenImage  string
 	xvfbImage    string
+	directWSPort int // non-zero = skip CDP discovery, connect directly to this port
 
 	mu       sync.Mutex
 	sessions map[string]*SessionInfo
@@ -45,6 +46,7 @@ func NewSessionManager(client kubernetes.Interface, cfg Config) *SessionManager 
 		browserArgs:  cfg.BrowserArgs,
 		wardenImage:  cfg.WardenImage,
 		xvfbImage:    cfg.XvfbImage,
+		directWSPort: cfg.DirectWSPort,
 		sessions:     make(map[string]*SessionInfo),
 	}
 }
@@ -111,17 +113,25 @@ func (sm *SessionManager) Handle(ctx context.Context, w http.ResponseWriter, r *
 		return
 	}
 
-	log.Info("pod ready, discovering CDP endpoint", "podIP", podIP)
-	cdpURL, err := DiscoverCDPEndpoint(podIP, bk8s.CDPPort)
-	if err != nil {
-		log.Error("discover CDP", "err", err)
-		podCreationErrors.WithLabelValues("cdp_discover").Inc()
-		clientConn.Close(websocket.StatusInternalError, "browser CDP not ready")
-		return
+	var cdpURL string
+	if sm.directWSPort > 0 {
+		// Proxy-image mode (e.g. sockpuppetbrowser): connect directly to the
+		// image's WebSocket port, forwarding client query params so flags like
+		// ?headful=true reach the browser image.
+		cdpURL = fmt.Sprintf("ws://%s:%d/?%s", podIP, sm.directWSPort, params.Encode())
+		log.Info("pod ready, using direct WebSocket", "podIP", podIP, "port", sm.directWSPort)
+	} else {
+		log.Info("pod ready, discovering CDP endpoint", "podIP", podIP)
+		var err error
+		cdpURL, err = DiscoverCDPEndpoint(podIP, bk8s.CDPPort)
+		if err != nil {
+			log.Error("discover CDP", "err", err)
+			podCreationErrors.WithLabelValues("cdp_discover").Inc()
+			clientConn.Close(websocket.StatusInternalError, "browser CDP not ready")
+			return
+		}
+		cdpURL = rewriteHost(cdpURL, podIP)
 	}
-
-	// Rewrite the CDP URL to use the pod IP (it may say localhost).
-	cdpURL = rewriteHost(cdpURL, podIP)
 	log.Info("relaying CDP", "cdpURL", cdpURL, "startupLatency", time.Since(start).Round(time.Millisecond))
 	sessionStartupLatency.Observe(time.Since(start).Seconds())
 

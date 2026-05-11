@@ -23,6 +23,7 @@ func main() {
 	browserImage := flag.String("browser-image", "chromedp/headless-shell:latest", "browser container image")
 	wardenImage := flag.String("warden-image", "ghcr.io/jlaska/bbroker-warden:latest", "warden sidecar image")
 	xvfbImage := flag.String("xvfb-image", "ghcr.io/jlaska/bbroker-xvfb:latest", "xvfb sidecar image")
+	directWSPort := flag.Int("direct-ws-port", 0, "skip CDP discovery and connect directly to this port (for proxy images like sockpuppetbrowser)")
 	kubeconfig := flag.String("kubeconfig", "", "path to kubeconfig (empty = in-cluster)")
 	flag.Parse()
 
@@ -48,8 +49,7 @@ func main() {
 		BrowserImage: *browserImage,
 		WardenImage:  *wardenImage,
 		XvfbImage:    *xvfbImage,
-		// BrowserArgs left nil: chromedp/headless-shell manages its own startup.
-		// Set via env or future flag for bare Chrome images.
+		DirectWSPort: *directWSPort,
 	}
 	manager := proxy.NewSessionManager(k8sClient, cfg)
 	srv := proxy.NewServer(cfg, manager)
