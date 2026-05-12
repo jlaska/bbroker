@@ -29,6 +29,18 @@ spec:
             limits:
               cpu: 100m
               memory: 64Mi
+        {{- if .Values.browser.headfulImage }}
+        - name: pull-browser-headful
+          image: {{ .Values.browser.headfulImage }}
+          command: ["true"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+        {{- end }}
         - name: pull-warden
           image: "{{ .Values.image.warden.repository }}:{{ .Values.image.warden.tag }}"
           command: ["/bbroker-warden", "-h"]

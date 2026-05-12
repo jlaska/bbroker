@@ -17,6 +17,11 @@ browserNamespace: bbroker-system
 
 browser:
   image: chromedp/headless-shell:latest
+  # headfulImage: when set, used for ?headful=true sessions with explicit Chrome
+  # args (BuildChromeArgs). Use a full Chromium image like bbroker-chrome that
+  # accepts args and connects to the Xvfb sidecar via DISPLAY=:99.
+  headfulImage: ghcr.io/jlaska/bbroker-chrome:latest
+  imagePullPolicy: IfNotPresent
   idleTimeoutSeconds: 300
   sessionTimeoutSeconds: 1800
   # directWSPort: when non-zero, skip CDP /json/version discovery and connect

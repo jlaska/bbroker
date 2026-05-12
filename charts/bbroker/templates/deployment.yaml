@@ -32,6 +32,10 @@ spec:
             {{- if .Values.browser.directWSPort }}
             - -direct-ws-port={{ .Values.browser.directWSPort }}
             {{- end }}
+            {{- if .Values.browser.headfulImage }}
+            - -headful-browser-image={{ .Values.browser.headfulImage }}
+            {{- end }}
+            - -browser-image-pull-policy={{ .Values.browser.imagePullPolicy }}
           ports:
             - name: ws
               containerPort: {{ .Values.service.port }}

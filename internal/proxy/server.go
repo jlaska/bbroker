@@ -28,6 +28,12 @@ type Config struct {
 	// Use this for "proxy-image" browsers like sockpuppetbrowser that expose
 	// a WebSocket endpoint directly rather than Chrome's raw CDP port.
 	DirectWSPort int
+	// HeadfulBrowserImage, when set, is used for ?headful=true sessions.
+	// bbrokerd generates explicit Chrome CLI args (BuildChromeArgs) for this
+	// image. Use a full Chromium image (e.g. bbroker-chrome) that accepts
+	// args and can connect to the Xvfb sidecar via DISPLAY=:99.
+	HeadfulBrowserImage    string
+	BrowserImagePullPolicy string // e.g. "IfNotPresent", "Always"; empty = IfNotPresent
 }
 
 // Server is the bbrokerd HTTP/WebSocket server.

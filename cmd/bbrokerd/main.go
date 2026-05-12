@@ -24,6 +24,8 @@ func main() {
 	wardenImage := flag.String("warden-image", "ghcr.io/jlaska/bbroker-warden:latest", "warden sidecar image")
 	xvfbImage := flag.String("xvfb-image", "ghcr.io/jlaska/bbroker-xvfb:latest", "xvfb sidecar image")
 	directWSPort := flag.Int("direct-ws-port", 0, "skip CDP discovery and connect directly to this port (for proxy images like sockpuppetbrowser)")
+	headfulBrowserImage := flag.String("headful-browser-image", "", "browser image for ?headful=true sessions; generates Chrome CLI args automatically (use with bbroker-chrome)")
+	browserImagePullPolicy := flag.String("browser-image-pull-policy", "IfNotPresent", "imagePullPolicy for browser containers: IfNotPresent or Always")
 	kubeconfig := flag.String("kubeconfig", "", "path to kubeconfig (empty = in-cluster)")
 	flag.Parse()
 
@@ -43,13 +45,15 @@ func main() {
 	cancel()
 
 	cfg := proxy.Config{
-		ListenAddr:   *addr,
-		MetricsAddr:  *metricsAddr,
-		Namespace:    *namespace,
-		BrowserImage: *browserImage,
-		WardenImage:  *wardenImage,
-		XvfbImage:    *xvfbImage,
-		DirectWSPort: *directWSPort,
+		ListenAddr:             *addr,
+		MetricsAddr:            *metricsAddr,
+		Namespace:              *namespace,
+		BrowserImage:           *browserImage,
+		WardenImage:            *wardenImage,
+		XvfbImage:              *xvfbImage,
+		DirectWSPort:           *directWSPort,
+		HeadfulBrowserImage:    *headfulBrowserImage,
+		BrowserImagePullPolicy: *browserImagePullPolicy,
 	}
 	manager := proxy.NewSessionManager(k8sClient, cfg)
 	srv := proxy.NewServer(cfg, manager)

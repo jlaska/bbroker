@@ -122,12 +122,48 @@ async def test_concurrent_sessions():
     print("  PASS")
 
 
+async def test_headful_pod_structure():
+    """Verify ?headful=true creates a 3-container pod (browser + warden + xvfb)
+    and that Chrome responds to CDP commands."""
+    import subprocess
+    print("=== Test: headful pod has 3 containers (browser + warden + xvfb) ===")
+
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(BBROKER_URL + "?headful=true")
+
+        # Check pod container count
+        result = subprocess.run(
+            ["kubectl", "--context", "kind-bbroker-test",
+             "-n", "bbroker-system", "get", "pods",
+             "-l", "bbroker.io/component=browser",
+             "-o", "jsonpath={.items[0].spec.containers[*].name}"],
+            capture_output=True, text=True
+        )
+        containers = result.stdout.strip().split()
+        print(f"  Containers in headful pod: {containers}")
+        assert len(containers) == 3, f"Expected 3 containers, got {len(containers)}: {containers}"
+        assert "browser" in containers, "Missing 'browser' container"
+        assert "warden" in containers, "Missing 'warden' container"
+        assert "xvfb" in containers, "Missing 'xvfb' container"
+
+        # Verify Chrome is actually functional
+        page = await browser.new_page()
+        await page.goto("https://example.com", timeout=30000)
+        title = await page.title()
+        print(f"  Page title in headful mode: {title!r}")
+        assert "Example" in title, f"Unexpected title: {title!r}"
+
+        await browser.close()
+    print("  PASS")
+
+
 async def main():
     tests = [
         test_basic_navigation,
         test_status_reflects_active_session,
         test_pod_created_and_deleted,
         test_concurrent_sessions,
+        test_headful_pod_structure,
     ]
     failed = []
     for t in tests:

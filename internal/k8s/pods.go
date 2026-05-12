@@ -31,11 +31,12 @@ type SessionConfig struct {
 	// When empty, the image's own entrypoint runs unmodified (correct for
 	// self-contained images like chromedp/headless-shell that manage Chrome
 	// startup internally). Set explicitly for bare Chrome binaries.
-	BrowserArgs  []string
-	WardenImage  string
-	Headful      bool
-	XvfbImage    string
-	Params       url.Values
+	BrowserArgs            []string
+	BrowserImagePullPolicy corev1.PullPolicy // defaults to IfNotPresent when empty
+	WardenImage            string
+	Headful                bool
+	XvfbImage              string
+	Params                 url.Values
 }
 
 // CreateBrowserPod creates an ephemeral browser pod and returns its name.
@@ -102,10 +103,15 @@ func buildPodSpec(cfg SessionConfig) *corev1.Pod {
 }
 
 func browserContainer(cfg SessionConfig, chromeArgs []string) corev1.Container {
+	pullPolicy := cfg.BrowserImagePullPolicy
+	if pullPolicy == "" {
+		pullPolicy = corev1.PullIfNotPresent
+	}
 	c := corev1.Container{
-		Name:  "browser",
-		Image: cfg.BrowserImage,
-		Args:  chromeArgs,
+		Name:            "browser",
+		Image:           cfg.BrowserImage,
+		ImagePullPolicy: pullPolicy,
+		Args:            chromeArgs,
 		Ports: []corev1.ContainerPort{
 			{Name: "cdp", ContainerPort: CDPPort, Protocol: corev1.ProtocolTCP},
 		},
@@ -194,21 +200,24 @@ func xvfbContainer(cfg SessionConfig) corev1.Container {
 	}
 }
 
-func buildChromeArgs(cfg SessionConfig) []string {
+// BuildChromeArgs generates Chrome CLI flags for a bare Chrome binary
+// (e.g. bbroker-chrome). Not used for self-managed images like
+// chromedp/headless-shell which handle their own startup.
+func BuildChromeArgs(headful bool, params url.Values) []string {
 	args := []string{
 		"--remote-debugging-address=0.0.0.0",
 		fmt.Sprintf("--remote-debugging-port=%d", CDPPort),
 		"--no-sandbox",
 		"--disable-dev-shm-usage",
 		"--disable-gpu",
+		"--window-size=1920,1080",
 	}
-	if !cfg.Headful {
+	if !headful {
 		args = append(args, "--headless=new")
 	}
-	// Pass through any extra flags from query params (e.g. --window-size)
-	for key := range cfg.Params {
+	for key := range params {
 		if len(key) > 2 && key[:2] == "--" {
-			val := cfg.Params.Get(key)
+			val := params.Get(key)
 			if val == "" {
 				args = append(args, key)
 			} else {

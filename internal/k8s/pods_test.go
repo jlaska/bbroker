@@ -108,8 +108,7 @@ func TestBuildChromeArgs_ExtraFlags(t *testing.T) {
 	params.Set("--window-size", "1280,720")
 	params.Set("headful", "true") // not a flag, should be ignored
 
-	cfg := SessionConfig{Params: params}
-	args := buildChromeArgs(cfg)
+	args := BuildChromeArgs(false, params)
 
 	found := false
 	for _, a := range args {
@@ -122,5 +121,37 @@ func TestBuildChromeArgs_ExtraFlags(t *testing.T) {
 	}
 	if !found {
 		t.Error("--window-size not passed to Chrome")
+	}
+}
+
+func TestBuildChromeArgs_Headless(t *testing.T) {
+	args := BuildChromeArgs(false, url.Values{})
+	found := false
+	for _, a := range args {
+		if a == "--headless=new" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected --headless=new for headless mode")
+	}
+}
+
+func TestBuildChromeArgs_Headful(t *testing.T) {
+	args := BuildChromeArgs(true, url.Values{})
+	for _, a := range args {
+		if a == "--headless=new" || a == "--headless" {
+			t.Errorf("unexpected headless flag in headful mode: %s", a)
+		}
+	}
+	// Must still have CDP flags
+	hasDebugAddr := false
+	for _, a := range args {
+		if a == "--remote-debugging-address=0.0.0.0" {
+			hasDebugAddr = true
+		}
+	}
+	if !hasDebugAddr {
+		t.Error("expected --remote-debugging-address in headful args")
 	}
 }

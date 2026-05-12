@@ -12,6 +12,7 @@ import (
 	"time"
 
 	bk8s "github.com/jlaska/bbroker/internal/k8s"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"nhooyr.io/websocket"
 )
@@ -26,13 +27,15 @@ type SessionInfo struct {
 
 // SessionManager creates and destroys browser pods per client connection.
 type SessionManager struct {
-	client       kubernetes.Interface
-	namespace    string
-	browserImage string
-	browserArgs  []string
-	wardenImage  string
-	xvfbImage    string
-	directWSPort int // non-zero = skip CDP discovery, connect directly to this port
+	client              kubernetes.Interface
+	namespace           string
+	browserImage        string
+	browserArgs         []string
+	headfulBrowserImage    string // image for ?headful=true; empty = fall back to browserImage
+	browserImagePullPolicy string
+	wardenImage            string
+	xvfbImage           string
+	directWSPort        int // non-zero = skip CDP discovery, connect directly to this port
 
 	mu       sync.Mutex
 	sessions map[string]*SessionInfo
@@ -40,14 +43,16 @@ type SessionManager struct {
 
 func NewSessionManager(client kubernetes.Interface, cfg Config) *SessionManager {
 	return &SessionManager{
-		client:       client,
-		namespace:    cfg.Namespace,
-		browserImage: cfg.BrowserImage,
-		browserArgs:  cfg.BrowserArgs,
-		wardenImage:  cfg.WardenImage,
-		xvfbImage:    cfg.XvfbImage,
-		directWSPort: cfg.DirectWSPort,
-		sessions:     make(map[string]*SessionInfo),
+		client:              client,
+		namespace:           cfg.Namespace,
+		browserImage:        cfg.BrowserImage,
+		browserArgs:         cfg.BrowserArgs,
+		headfulBrowserImage:    cfg.HeadfulBrowserImage,
+		browserImagePullPolicy: cfg.BrowserImagePullPolicy,
+		wardenImage:            cfg.WardenImage,
+		xvfbImage:           cfg.XvfbImage,
+		directWSPort:        cfg.DirectWSPort,
+		sessions:            make(map[string]*SessionInfo),
 	}
 }
 
@@ -78,15 +83,29 @@ func (sm *SessionManager) Handle(ctx context.Context, w http.ResponseWriter, r *
 	activeSessions.WithLabelValues(browser).Inc()
 	defer activeSessions.WithLabelValues(browser).Dec()
 
+	// Select browser image and args based on headful flag.
+	// Headful sessions use headfulBrowserImage (bbroker-chrome) with explicit
+	// Chrome args. Headless sessions use browserImage with nil args
+	// (self-managed images like chromedp/headless-shell run their own entrypoint).
+	browserImage := sm.browserImage
+	var browserArgs []string
+	if headful {
+		if sm.headfulBrowserImage != "" {
+			browserImage = sm.headfulBrowserImage
+		}
+		browserArgs = bk8s.BuildChromeArgs(true, params)
+	}
+
 	cfg := bk8s.SessionConfig{
-		SessionID:    sessionID,
-		Namespace:    sm.namespace,
-		BrowserImage: sm.browserImage,
-		BrowserArgs:  sm.browserArgs,
-		WardenImage:  sm.wardenImage,
-		Headful:      headful,
-		XvfbImage:    sm.xvfbImage,
-		Params:       params,
+		SessionID:              sessionID,
+		Namespace:              sm.namespace,
+		BrowserImage:           browserImage,
+		BrowserArgs:            browserArgs,
+		BrowserImagePullPolicy: corev1.PullPolicy(sm.browserImagePullPolicy),
+		WardenImage:            sm.wardenImage,
+		Headful:                headful,
+		XvfbImage:              sm.xvfbImage,
+		Params:                 params,
 	}
 
 	pod, err := bk8s.CreateBrowserPod(ctx, sm.client, cfg)
