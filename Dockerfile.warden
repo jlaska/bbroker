@@ -7,6 +7,8 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -ldflags="-s -w" -o /bbroker-warden ./cmd/bbroker-warden
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM alpine:3.20
+RUN addgroup -S bbroker && adduser -S bbroker -G bbroker
+USER bbroker
 COPY --from=builder /bbroker-warden /bbroker-warden
 ENTRYPOINT ["/bbroker-warden"]
