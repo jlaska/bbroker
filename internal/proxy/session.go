@@ -77,6 +77,7 @@ func (sm *SessionManager) Handle(ctx context.Context, w http.ResponseWriter, r *
 		podCreationErrors.WithLabelValues("ws_accept").Inc()
 		return
 	}
+	clientConn.SetReadLimit(-1)
 	defer clientConn.CloseNow()
 
 	sessionsTotal.WithLabelValues(browser).Inc()
@@ -161,6 +162,7 @@ func (sm *SessionManager) Handle(ctx context.Context, w http.ResponseWriter, r *
 		clientConn.Close(websocket.StatusInternalError, "could not connect to browser")
 		return
 	}
+	chromeConn.SetReadLimit(-1)
 	defer chromeConn.CloseNow()
 
 	info := &SessionInfo{ID: sessionID, Browser: browser, PodIP: podIP, Started: start}
@@ -169,11 +171,13 @@ func (sm *SessionManager) Handle(ctx context.Context, w http.ResponseWriter, r *
 	defer func() { sessionDuration.Observe(time.Since(start).Seconds()) }()
 
 	log.Info("CDP relay established")
-	relay(ctx, clientConn, chromeConn)
+	if err := relay(ctx, clientConn, chromeConn); err != nil {
+		log.Debug("relay ended", "err", err)
+	}
 	log.Info("session closed", "duration", time.Since(start).Round(time.Second))
 }
 
-func relay(ctx context.Context, a, b *websocket.Conn) {
+func relay(ctx context.Context, a, b *websocket.Conn) error {
 	errCh := make(chan error, 2)
 	pipe := func(src, dst *websocket.Conn, dir string) {
 		for {
@@ -191,7 +195,7 @@ func relay(ctx context.Context, a, b *websocket.Conn) {
 	}
 	go pipe(a, b, "in")
 	go pipe(b, a, "out")
-	<-errCh
+	return <-errCh
 }
 
 func (sm *SessionManager) addSession(info *SessionInfo) {

@@ -27,9 +27,14 @@ func main() {
 	headfulBrowserImage := flag.String("headful-browser-image", "", "browser image for ?headful=true sessions; generates Chrome CLI args automatically (use with bbroker-chrome)")
 	browserImagePullPolicy := flag.String("browser-image-pull-policy", "IfNotPresent", "imagePullPolicy for browser containers: IfNotPresent or Always")
 	kubeconfig := flag.String("kubeconfig", "", "path to kubeconfig (empty = in-cluster)")
+	debug := flag.Bool("debug", false, "enable debug logging")
 	flag.Parse()
 
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
+	level := slog.LevelInfo
+	if *debug {
+		level = slog.LevelDebug
+	}
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 
 	k8sClient, err := buildK8sClient(*kubeconfig)
 	if err != nil {
