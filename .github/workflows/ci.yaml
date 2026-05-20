@@ -59,6 +59,7 @@ jobs:
           images: |
             ghcr.io/${{ github.repository_owner }}/bbroker-proxy
           tags: |
+            type=semver,pattern=v{{version}}
             type=semver,pattern={{version}}
             type=raw,value=latest
       - name: Build and push proxy
@@ -77,6 +78,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/bbroker-warden
           tags: |
+            type=semver,pattern=v{{version}}
             type=semver,pattern={{version}}
             type=raw,value=latest
       - name: Build and push warden
@@ -93,6 +95,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/bbroker-xvfb
           tags: |
+            type=semver,pattern=v{{version}}
             type=semver,pattern={{version}}
             type=raw,value=latest
       - name: Build and push xvfb
@@ -108,6 +111,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/bbroker-chrome
           tags: |
+            type=semver,pattern=v{{version}}
             type=semver,pattern={{version}}
             type=raw,value=latest
       - name: Build and push chrome
